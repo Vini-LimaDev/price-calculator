@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"price-calculator/conversao"
 )
 
 type CalculadoraDePrecos struct {
@@ -49,17 +51,10 @@ func (c *CalculadoraDePrecos) LerPrecosDoArquivo() error {
 	}
 
 	// 3) Converte para float64
-	precos := make([]float64, 0, len(linhas))
-	for i, linha := range linhas {
-		linha = strings.TrimSpace(linha)
-		if linha == "" {
-			continue // ignora linhas vazias
-		}
-		v, err := strconv.ParseFloat(linha, 64)
-		if err != nil {
-			return fmt.Errorf("erro ao converter a linha %d (%q): %w", i+1, linha, err)
-		}
-		precos = append(precos, v)
+	precos, err := conversao.StringParaFloat64(linhas)
+	if err != nil {
+		arquivo.Close()
+		return fmt.Errorf("erro ao converter os preços: %w", err)
 	}
 
 	c.Precos = precos
@@ -80,6 +75,7 @@ func (c *CalculadoraDePrecos) Calcular() {
 		taxaComPreco := preco * (1 + c.Taxas)
 		fmt.Printf("%-12.2f | %-15.2f\n", preco, taxaComPreco)
 	}
+	fmt.Println()
 }
 
 func NovoCalculadoraDePrecos(taxas float64) *CalculadoraDePrecos {
