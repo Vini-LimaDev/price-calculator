@@ -1,3 +1,3 @@
-module github.com/Vini-LimaDev/price-calculator
+module price-calculator
 
 go 1.25.0
