@@ -49,7 +49,7 @@ func (c *CalculadoraDePrecos) Calcular() {
 		fmt.Printf("%-12.2f | %-15.2f\n", preco, taxaComPreco)
 	}
 	fmt.Println()
-	leituraArq.CriaJSON(fmt.Sprintf("resultado_%v.json", c.Taxas), c)
+	leituraArq.CriaJSON(fmt.Sprintf("resultado_%.0f.json", c.Taxas*100), c)
 }
 
 func NovoCalculadoraDePrecos(taxas float64) *CalculadoraDePrecos {
