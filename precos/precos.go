@@ -12,7 +12,7 @@ type CalculadoraDePrecos struct {
 	FileManager          leituraArq.FileManager
 	Taxas                float64
 	Precos               []float64
-	PrecosIncluindoTaxas []float64
+	PrecosIncluindoTaxas []string
 }
 
 // Lê os preços de "precos.txt". Se não existir, pergunta ao usuário, cria o arquivo e então reabre p/ leitura.
@@ -47,8 +47,8 @@ func (c *CalculadoraDePrecos) Calcular() {
 	for _, preco := range c.Precos {
 		taxaComPreco := preco * (1 + c.Taxas)
 		fmt.Printf("%-12.2f | %-15.2f\n", preco, taxaComPreco)
-		// adiciona ao slice que será serializado no JSON
-		c.PrecosIncluindoTaxas = append(c.PrecosIncluindoTaxas, taxaComPreco)
+		// adiciona ao slice formatado (duas casas decimais) que será serializado no JSON
+		c.PrecosIncluindoTaxas = append(c.PrecosIncluindoTaxas, fmt.Sprintf("%.2f", taxaComPreco))
 	}
 	fmt.Println()
 	c.FileManager.CriaJSON(c)
@@ -59,6 +59,6 @@ func NovoCalculadoraDePrecos(fm leituraArq.FileManager, taxas float64) *Calculad
 		FileManager:          fm,
 		Taxas:                taxas,
 		Precos:               []float64{},
-		PrecosIncluindoTaxas: []float64{},
+		PrecosIncluindoTaxas: []string{},
 	}
 }
