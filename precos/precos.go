@@ -9,17 +9,17 @@ import (
 )
 
 type CalculadoraDePrecos struct {
+	FileManager          leituraArq.FileManager
 	Taxas                float64
 	Precos               []float64
-	PrecosIncluindoTaxas []string
+	PrecosIncluindoTaxas []float64
 }
-
-const nome = "precos.txt"
 
 // Lê os preços de "precos.txt". Se não existir, pergunta ao usuário, cria o arquivo e então reabre p/ leitura.
 func (c *CalculadoraDePrecos) LerPrecosDoArquivo() error {
 
-	linhas, err := leituraArq.LerArquivo(nome)
+	linhas, err := c.FileManager.LerArquivo()
+
 	if err != nil {
 		return fmt.Errorf("erro ao ler os preços do arquivo: %w", err)
 	}
@@ -47,11 +47,18 @@ func (c *CalculadoraDePrecos) Calcular() {
 	for _, preco := range c.Precos {
 		taxaComPreco := preco * (1 + c.Taxas)
 		fmt.Printf("%-12.2f | %-15.2f\n", preco, taxaComPreco)
+		// adiciona ao slice que será serializado no JSON
+		c.PrecosIncluindoTaxas = append(c.PrecosIncluindoTaxas, taxaComPreco)
 	}
 	fmt.Println()
-	leituraArq.CriaJSON(fmt.Sprintf("resultado_%.0f.json", c.Taxas*100), c)
+	c.FileManager.CriaJSON(c)
 }
 
-func NovoCalculadoraDePrecos(taxas float64) *CalculadoraDePrecos {
-	return &CalculadoraDePrecos{Taxas: taxas, Precos: []float64{}}
+func NovoCalculadoraDePrecos(fm leituraArq.FileManager, taxas float64) *CalculadoraDePrecos {
+	return &CalculadoraDePrecos{
+		FileManager:          fm,
+		Taxas:                taxas,
+		Precos:               []float64{},
+		PrecosIncluindoTaxas: []float64{},
+	}
 }

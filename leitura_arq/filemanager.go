@@ -10,9 +10,14 @@ import (
 	"strings"
 )
 
-func LerArquivo(nomeArquivo string) ([]string, error) {
+type FileManager struct {
+	InputPathArquivo  string
+	OutputPathArquivo string
+}
+
+func (fm *FileManager) LerArquivo() ([]string, error) {
 	// 1) Tenta abrir
-	arquivo, err := os.Open(nomeArquivo)
+	arquivo, err := os.Open(fm.InputPathArquivo)
 
 	if err != nil {
 		// Se não existe, coleta do usuário e cria
@@ -23,7 +28,7 @@ func LerArquivo(nomeArquivo string) ([]string, error) {
 				return nil, fmt.Errorf("erro ao criar o arquivo: %w", err)
 			}
 			// Reabre para leitura
-			arquivo, err = os.Open(nomeArquivo)
+			arquivo, err = os.Open(fm.InputPathArquivo)
 			if err != nil {
 				return nil, errors.New("erro ao abrir o arquivo após criar")
 			}
@@ -49,8 +54,8 @@ func LerArquivo(nomeArquivo string) ([]string, error) {
 	return linhas, nil
 }
 
-func CriaJSON(nomeArquivo string, data interface{}) error {
-	arq, err := os.Create(nomeArquivo)
+func (fm *FileManager) CriaJSON(data interface{}) error {
+	arq, err := os.Create(fm.OutputPathArquivo)
 	if err != nil {
 		return errors.New("erro ao criar o arquivo JSON")
 	}
@@ -103,4 +108,11 @@ func criarArquivo(precos []float64) error {
 		}
 	}
 	return w.Flush()
+}
+
+func New(inputPath, outputPath string) *FileManager {
+	return &FileManager{
+		InputPathArquivo:  inputPath,
+		OutputPathArquivo: outputPath,
+	}
 }
