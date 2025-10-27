@@ -9,10 +9,10 @@ import (
 )
 
 type CalculadoraDePrecos struct {
-	FileManager          leituraArq.FileManager
-	Taxas                float64
-	Precos               []float64
-	PrecosIncluindoTaxas []string
+	FileManager          leituraArq.FileManager `json:"-"` // não será serializado no JSON
+	Taxas                float64                `json:"taxa"`
+	Precos               []float64              `json:"precos"`
+	PrecosIncluindoTaxas []string               `json:"precos_incluindo_taxas"`
 }
 
 // Lê os preços de "precos.txt". Se não existir, pergunta ao usuário, cria o arquivo e então reabre p/ leitura.
