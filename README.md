@@ -1,4 +1,4 @@
-# price-calculator
+# Calculadora de Preço  🖩
 
 Calculadora de Impostos em **Go** — projeto didático para praticar `structs`, ponteiros, leitura/escrita de arquivos, importação de funções de outros arquivos.
 
