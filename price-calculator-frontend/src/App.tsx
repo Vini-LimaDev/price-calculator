@@ -79,6 +79,19 @@ export default function App() {
     }
   }, [precosArquivo, precosTexto]);
 
+  const taxasAtuais = useMemo<number[]>(() => {
+    try {
+      return taxasTexto
+        .split(/[,;\s]+/)
+        .map((t) => t.trim())
+        .filter(Boolean)
+        .map((t) => Number(t.replace(",", ".")))
+        .filter((n) => Number.isFinite(n) && n >= 0);
+    } catch {
+      return [];
+    }
+  }, [taxasTexto]);
+
   const handleUploadClick = () => fileRef.current?.click();
 
   const onFileChange: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
@@ -200,7 +213,7 @@ export default function App() {
               className="w-full h-[80px] px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 flex items-center"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Taxas em percentual (%)
+              {taxasAtuais.length} taxa(s) detectada(s) - Taxas em percentual (%)
             </p>
           </div>
         </div>
