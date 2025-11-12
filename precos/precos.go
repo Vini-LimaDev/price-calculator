@@ -54,9 +54,30 @@ func (c *CalculadoraDePrecos) Calcular() {
 	c.FileManager.CriaJSON(c)
 }
 
+// CalcularComPrecos calcula taxas para uma lista de preços já fornecida (para uso em APIs)
+func (c *CalculadoraDePrecos) CalcularComPrecos(precos []float64) {
+	c.Precos = precos
+	c.PrecosIncluindoTaxas = []string{} // limpa resultados anteriores
+
+	for _, preco := range c.Precos {
+		taxaComPreco := preco * (1 + c.Taxas)
+		// adiciona ao slice formatado (duas casas decimais) que será serializado no JSON
+		c.PrecosIncluindoTaxas = append(c.PrecosIncluindoTaxas, fmt.Sprintf("%.2f", taxaComPreco))
+	}
+}
+
 func NovoCalculadoraDePrecos(fm leituraArq.FileManager, taxas float64) *CalculadoraDePrecos {
 	return &CalculadoraDePrecos{
 		FileManager:          fm,
+		Taxas:                taxas,
+		Precos:               []float64{},
+		PrecosIncluindoTaxas: []string{},
+	}
+}
+
+// NovoCalculadoraDePrecosParaAPI cria uma instância para uso em APIs (sem FileManager)
+func NovoCalculadoraDePrecosParaAPI(taxas float64) *CalculadoraDePrecos {
+	return &CalculadoraDePrecos{
 		Taxas:                taxas,
 		Precos:               []float64{},
 		PrecosIncluindoTaxas: []string{},

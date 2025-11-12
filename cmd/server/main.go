@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	leituraArq "price-calculator/leitura_arq"
+	"price-calculator/precos"
 )
 
 type CalcularReq struct {
@@ -43,29 +44,26 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-func round2(n float64) float64 {
-	return math.Round(n*100) / 100
+func calcular(precosList []float64, taxa float64) (*precos.CalculadoraDePrecos, ResultadoGo) {
+	calc := precos.NovoCalculadoraDePrecosParaAPI(taxa)
+	calc.CalcularComPrecos(precosList)
+
+	resultado := ResultadoGo{
+		Taxa:                 calc.Taxas,
+		Precos:               calc.Precos,
+		PrecosIncluindoTaxas: calc.PrecosIncluindoTaxas,
+	}
+
+	return calc, resultado
 }
 
-func calcular(precos []float64, taxa float64) ResultadoGo {
-	out := make([]string, len(precos))
-	for i, p := range precos {
-		out[i] = fmt.Sprintf("%.2f", round2(p*(1+taxa)))
-	}
-	return ResultadoGo{
-		Taxa:                 taxa,
-		Precos:               precos,
-		PrecosIncluindoTaxas: out,
-	}
-}
-
-func salvarJSONResultado(res ResultadoGo) error {
+func salvarJSONResultado(calc *precos.CalculadoraDePrecos) error {
 	// nome no padrão resultado_XX.json
-	percent := int(math.Round(res.Taxa * 100))
+	percent := int(math.Round(calc.Taxas * 100))
 	outName := fmt.Sprintf("resultado_%d.json", percent)
 
 	fm := leituraArq.New("", outName)
-	return fm.CriaJSON(res) // reaproveita teu FileManager para persistir JSON
+	return fm.CriaJSON(calc) // reaproveita o FileManager para persistir JSON
 }
 
 func handleUpload(w http.ResponseWriter, r *http.Request) {
@@ -142,8 +140,8 @@ func handleCalcular(w http.ResponseWriter, r *http.Request) {
 
 	var resultados []ResultadoGo
 	for _, taxa := range req.Taxas {
-		res := calcular(req.Precos, taxa)
-		_ = salvarJSONResultado(res) // ignora erro para não travar resposta; logaria em prod
+		calc, res := calcular(req.Precos, taxa)
+		_ = salvarJSONResultado(calc) // ignora erro para não travar resposta; logaria em prod
 		resultados = append(resultados, res)
 	}
 	writeJSON(w, http.StatusOK, resultados)
