@@ -1,5 +1,5 @@
-import React, { useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import React, { useMemo, useRef, useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 /* ========= Helpers ========= */
 function parsePrices(text: string): number[] {
@@ -60,8 +60,8 @@ function calcularLocal(precos: number[], taxa: number): ResultadoGo {
 
 /* ========= App ========= */
 export default function App() {
-  const [precosTexto, setPrecosTexto] = useState<string>("10.00\n20.00\n100.00\n504.00");
-  const [taxasTexto, setTaxasTexto] = useState<string>("10, 7, 15");
+  const [precosTexto, setPrecosTexto] = useState<string>("");
+  const [taxasTexto, setTaxasTexto] = useState<string>("");
   const [precosArquivo, setPrecosArquivo] = useState<number[] | null>(null);
   const [resultados, setResultados] = useState<ResultadoGo[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -90,6 +90,8 @@ export default function App() {
       const nums = parsePrices(text);
       setPrecosArquivo(nums);
       setResultados(null);
+      // SEMPRE atualiza o campo de texto com os valores do arquivo
+      setPrecosTexto(nums.join('\n'));
       setMsg(`${nums.length} preços carregados do arquivo.`);
     } catch (err: any) {
       setErro(err?.message || "Falha ao ler arquivo.");
@@ -132,15 +134,40 @@ export default function App() {
   const limparArquivo = () => {
     setPrecosArquivo(null);
     setResultados(null);
-    setMsg("Voltou a usar os preços digitados manualmente.");
+    // SEMPRE limpa o campo de texto
+    setPrecosTexto("");
+    // Limpa o valor do input file para permitir re-upload do mesmo arquivo
+    if (fileRef.current) {
+      fileRef.current.value = "";
+    }
+    setMsg("Arquivo removido. Campo de valores limpo.");
   };
+
+  // Auto-hide para mensagens
+  useEffect(() => {
+    if (msg) {
+      const timer = setTimeout(() => {
+        setMsg(null);
+      }, 4000); // 4 segundos
+      return () => clearTimeout(timer);
+    }
+  }, [msg]);
+
+  useEffect(() => {
+    if (erro) {
+      const timer = setTimeout(() => {
+        setErro(null);
+      }, 6000); // 6 segundos (erro fica mais tempo)
+      return () => clearTimeout(timer);
+    }
+  }, [erro]);
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
         {/* Título */}
-        <h1 className="text-2xl font-bold text-center mb-8 text-gray-800">
-          🖩 Calculadora de Preços
+        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
+          💸 Calculadora de Preços
         </h1>
 
         {/* Campos de entrada lado a lado */}
@@ -151,10 +178,18 @@ export default function App() {
               onChange={(e) => setPrecosTexto(e.target.value)}
               placeholder="Digitar valores"
               rows={precosTexto.split('\n').length || 3}
-              className="w-full min-h-[80px] max-h-[200px] px-4 py-3 border-2 border-gray-300 rounded-lg resize-y focus:outline-none focus:border-blue-500"
+              disabled={!!precosArquivo}
+              className={`w-full min-h-[80px] max-h-[200px] px-4 py-3 border-2 border-gray-300 rounded-lg resize-y focus:outline-none focus:border-blue-500 flex items-start ${
+                precosArquivo ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''
+              }`}
+              style={{ 
+                verticalAlign: 'top',
+                lineHeight: '1.5'
+              }}
             />
             <p className="text-xs text-gray-500 mt-1">
               {precosAtuais.length} valor(es) detectado(s)
+              {precosArquivo && " (valores do arquivo)"}
             </p>
           </div>
           <div className="flex-1">
@@ -162,7 +197,7 @@ export default function App() {
               value={taxasTexto}
               onChange={(e) => setTaxasTexto(e.target.value)}
               placeholder="Digitar taxas (ex: 10, 7, 15)"
-              className="w-full h-[80px] px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              className="w-full h-[80px] px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 flex items-center"
             />
             <p className="text-xs text-gray-500 mt-1">
               Taxas em percentual (%)
@@ -171,7 +206,7 @@ export default function App() {
         </div>
 
         {/* Botões */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 mb-8 items-center justify-center">
           <input 
             ref={fileRef} 
             type="file" 
@@ -181,7 +216,7 @@ export default function App() {
           />
           <button
             onClick={handleUploadClick}
-            className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            className="px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
           >
             📁 Selecionar arquivo
           </button>
@@ -202,17 +237,34 @@ export default function App() {
           )}
         </div>
 
-        {/* Status Messages */}
-        {erro && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm text-center">
-            ⚠️ {erro}
-          </div>
-        )}
-        {!erro && msg && (
-          <div className="mb-4 p-3 bg-blue-100 border border-blue-300 rounded-lg text-blue-700 text-sm text-center">
-            ✅ {msg}
-          </div>
-        )}
+        {/* Status Messages com animação */}
+        <AnimatePresence>
+          {erro && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm text-center"
+            >
+              ⚠️ {erro}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {!erro && msg && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="mb-4 p-3 bg-blue-100 border border-blue-300 rounded-lg text-blue-700 text-sm text-center"
+            >
+              ✅ {msg}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Tabela para organizar os valores pós taxa */}
         <div className="bg-white border-2 border-gray-300 rounded-lg overflow-hidden">
