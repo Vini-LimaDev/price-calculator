@@ -290,6 +290,24 @@ export default function App() {
             </div>
           )}
         </div>
+
+        {/* Dica API */}
+        <motion.section 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-8 text-center text-xs text-gray-500"
+        >
+          {API_BASE ? (
+            <p>
+              🔗 Usando backend Go em <span className="font-mono text-gray-700 bg-gray-200 px-2 py-1 rounded">{API_BASE}</span>
+            </p>
+          ) : (
+            <p>
+              💻 Cálculo executado localmente no navegador. Configure <span className="font-mono bg-gray-200 px-2 py-1 rounded text-gray-700">VITE_API_BASE</span> para usar a API Go.
+            </p>
+          )}
+        </motion.section>
       </div>
     </div>
   );
