@@ -58,7 +58,6 @@ func calcular(precosList []float64, taxa float64) (*precos.CalculadoraDePrecos, 
 }
 
 func salvarJSONResultado(calc *precos.CalculadoraDePrecos) error {
-	// nome no padrão resultado_XX.json
 	percent := int(math.Round(calc.Taxas * 100))
 	outName := fmt.Sprintf("resultado_%d.json", percent)
 
@@ -72,7 +71,6 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// aceita multipart/form-data (file) ou text/plain no corpo
 	ct := r.Header.Get("Content-Type")
 	var body []byte
 	var err error
@@ -141,7 +139,7 @@ func handleCalcular(w http.ResponseWriter, r *http.Request) {
 	var resultados []ResultadoGo
 	for _, taxa := range req.Taxas {
 		calc, res := calcular(req.Precos, taxa)
-		_ = salvarJSONResultado(calc) // ignora erro para não travar resposta; logaria em prod
+		_ = salvarJSONResultado(calc)
 		resultados = append(resultados, res)
 	}
 	writeJSON(w, http.StatusOK, resultados)
