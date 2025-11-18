@@ -67,8 +67,21 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
 
   const fileRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const precosAtuais = useMemo<number[]>(() => {
     if (precosArquivo && precosArquivo.length) return precosArquivo;
@@ -176,12 +189,37 @@ export default function App() {
   }, [erro]);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-8 transition-colors duration-300">
       <div className="max-w-4xl mx-auto">
-        {/* Título */}
-        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
-          💸 Calculadora de Preços
-        </h1>
+        {/* Título e botão de tema */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100">
+            💸 Calculadora de Preços
+          </h1>
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className={`relative w-16 h-8 rounded-full transition-all duration-300 shadow-lg ${
+              darkMode ? 'bg-indigo-600' : 'bg-gray-300'
+            }`}
+            title={darkMode ? "Modo Claro" : "Modo Escuro"}
+          >
+            <div
+              className={`absolute top-1 left-1 w-6 h-6 rounded-full shadow-md transition-all duration-300 flex items-center justify-center ${
+                darkMode ? 'translate-x-8 bg-gray-800' : 'translate-x-0 bg-yellow-400'
+              }`}
+            >
+              {darkMode ? (
+                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+              )}
+            </div>
+          </button>
+        </div>
 
         {/* Campos de entrada lado a lado */}
         <div className="flex flex-col md:flex-row gap-4 mb-4">
@@ -192,15 +230,17 @@ export default function App() {
               placeholder="Digitar valores"
               rows={precosTexto.split('\n').length || 3}
               disabled={!!precosArquivo}
-              className={`w-full min-h-[80px] max-h-[200px] px-4 py-3 border-2 border-gray-300 rounded-lg resize-y focus:outline-none focus:border-blue-500 flex items-start ${
-                precosArquivo ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''
+              className={`w-full min-h-[80px] max-h-[200px] px-4 py-3 border-2 rounded-lg resize-y focus:outline-none transition-colors flex items-start ${
+                precosArquivo 
+                  ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600' 
+                  : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400'
               }`}
               style={{ 
                 verticalAlign: 'top',
                 lineHeight: '1.5'
               }}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {precosAtuais.length} valor(es) detectado(s)
               {precosArquivo && " (valores do arquivo)"}
             </p>
@@ -210,9 +250,9 @@ export default function App() {
               value={taxasTexto}
               onChange={(e) => setTaxasTexto(e.target.value)}
               placeholder="Digitar taxas (ex: 10, 7, 15)"
-              className="w-full h-[80px] px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 flex items-center"
+              className="w-full h-[80px] px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 flex items-center transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {taxasAtuais.length} taxa(s) detectada(s) - Taxas em percentual (%)
             </p>
           </div>
@@ -229,21 +269,21 @@ export default function App() {
           />
           <button
             onClick={handleUploadClick}
-            className="px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            className="px-4 py-3 bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 transition-colors"
           >
             📁 Selecionar arquivo
           </button>
           <button
             onClick={handleCalcular}
             disabled={loading || !precosAtuais.length}
-            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 transition-colors"
+            className="px-6 py-3 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 disabled:bg-gray-400 dark:disabled:bg-gray-600 transition-colors"
           >
             {loading ? "🔄 Calculando..." : "🧮 Calcular"}
           </button>
           {precosArquivo && (
             <button
               onClick={limparArquivo}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
+              className="px-4 py-2 bg-red-500 dark:bg-red-600 text-white rounded-lg hover:bg-red-600 dark:hover:bg-red-500 transition-colors text-sm"
             >
               ❌ Limpar arquivo
             </button>
@@ -258,7 +298,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm text-center"
+              className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg text-red-700 dark:text-red-300 text-sm text-center"
             >
               ⚠️ {erro}
             </motion.div>
@@ -272,7 +312,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              className="mb-4 p-3 bg-blue-100 border border-blue-300 rounded-lg text-blue-700 text-sm text-center"
+              className="mb-4 p-3 bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700 rounded-lg text-blue-700 dark:text-blue-300 text-sm text-center"
             >
               ✅ {msg}
             </motion.div>
@@ -280,15 +320,15 @@ export default function App() {
         </AnimatePresence>
 
         {/* Tabela para organizar os valores pós taxa */}
-        <div className="bg-white border-2 border-gray-300 rounded-lg overflow-hidden">
-          <div className="bg-gray-50 px-4 py-3 border-b border-gray-300">
-            <h2 className="text-lg font-semibold text-gray-800 text-center">
+        <div className="bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden transition-colors">
+          <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-300 dark:border-gray-600">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center">
               📊 Tabela para organizar os valores pós taxa
             </h2>
           </div>
 
           {!resultados || resultados.length === 0 ? (
-            <div className="h-64 flex items-center justify-center text-gray-500">
+            <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
               <div className="text-center">
                 <div className="text-4xl mb-2">📈</div>
                 <p className="font-medium">Nenhum resultado ainda</p>
@@ -309,15 +349,15 @@ export default function App() {
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="mt-8 text-center text-xs text-gray-500"
+          className="mt-8 text-center text-xs text-gray-500 dark:text-gray-400"
         >
           {API_BASE ? (
             <p>
-              🔗 Usando backend Go em <span className="font-mono text-gray-700 bg-gray-200 px-2 py-1 rounded">{API_BASE}</span>
+              🔗 Usando backend Go em <span className="font-mono text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{API_BASE}</span>
             </p>
           ) : (
             <p>
-              💻 Cálculo executado localmente no navegador. Configure <span className="font-mono bg-gray-200 px-2 py-1 rounded text-gray-700">VITE_API_BASE</span> para usar a API Go.
+              💻 Cálculo executado localmente no navegador. Configure <span className="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-gray-700 dark:text-gray-300">VITE_API_BASE</span> para usar a API Go.
             </p>
           )}
         </motion.section>
@@ -332,15 +372,15 @@ function TabelaResultado({ resultado }: { resultado: ResultadoGo }) {
   const taxaPercent = (taxa * 100).toFixed(1);
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
-      <div className="bg-blue-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+    <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+      <div className="bg-blue-50 dark:bg-blue-900/30 px-4 py-3 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-gray-800">Taxa aplicada: {taxaPercent}%</h3>
-          <p className="text-xs text-gray-600">{precos.length} produto(s)</p>
+          <h3 className="font-semibold text-gray-800 dark:text-gray-100">Taxa aplicada: {taxaPercent}%</h3>
+          <p className="text-xs text-gray-600 dark:text-gray-400">{precos.length} produto(s)</p>
         </div>
         <button
           onClick={() => downloadJSON(`resultado_${Math.round(taxa * 100)}.json`, resultado)}
-          className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-sm font-medium transition-colors"
+          className="px-3 py-1 bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-500 text-white rounded text-sm font-medium transition-colors"
         >
           📁 Download JSON
         </button>
@@ -348,15 +388,15 @@ function TabelaResultado({ resultado }: { resultado: ResultadoGo }) {
 
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th className="px-4 py-2 text-left text-gray-700 font-medium border-r border-gray-200">
+              <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-200 font-medium border-r border-gray-200 dark:border-gray-600">
                 Preço Original
               </th>
-              <th className="px-4 py-2 text-left text-gray-700 font-medium border-r border-gray-200">
+              <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-200 font-medium border-r border-gray-200 dark:border-gray-600">
                 Com Taxa ({taxaPercent}%)
               </th>
-              <th className="px-4 py-2 text-left text-gray-700 font-medium">
+              <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-200 font-medium">
                 Diferença
               </th>
             </tr>
@@ -366,14 +406,14 @@ function TabelaResultado({ resultado }: { resultado: ResultadoGo }) {
               const precoComTaxa = Number(precos_incluindo_taxas[i]);
               const diferenca = precoComTaxa - preco;
               return (
-                <tr key={i} className="border-t border-gray-200 hover:bg-gray-50">
-                  <td className="px-4 py-3 font-mono text-gray-800 border-r border-gray-200">
+                <tr key={i} className="border-t border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <td className="px-4 py-3 font-mono text-gray-800 dark:text-gray-200 border-r border-gray-200 dark:border-gray-600">
                     {formatCurrency(preco)}
                   </td>
-                  <td className="px-4 py-3 font-mono text-green-600 border-r border-gray-200">
+                  <td className="px-4 py-3 font-mono text-green-600 dark:text-green-400 border-r border-gray-200 dark:border-gray-600">
                     {formatCurrency(precoComTaxa)}
                   </td>
-                  <td className="px-4 py-3 font-mono text-blue-600">
+                  <td className="px-4 py-3 font-mono text-blue-600 dark:text-blue-400">
                     +{formatCurrency(diferenca)}
                   </td>
                 </tr>
